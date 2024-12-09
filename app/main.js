@@ -8,9 +8,11 @@ const server = net.createServer((socket) => {
         const path = data.toString().split(" ")[1]
         let responseText
         let bodyText
-        if (path.startsWith("/echo/")) {
+        if (path.startsWith("/")) {
             responseText = "200 OK"
-            bodyText = path.split("/")[2]
+            if (path.startsWith("/echo/")) {
+                bodyText = path.split("/")[2]
+            }
         } else {
             responseText = "404 Not Found"
             bodyText = ""
