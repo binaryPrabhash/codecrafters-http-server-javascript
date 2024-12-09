@@ -6,18 +6,15 @@ const server = net.createServer((socket) => {
 
     socket.on("data", (data) => {
         const path = data.toString().split(" ")[1]
-        let responseText
         let bodyText
-        if (path.startsWith("/")) {
-            responseText = "200 OK"
-            if (path.startsWith("/echo/")) {
-                bodyText = path.split("/")[2]
-            }
+        if (path === "/") {
+            socket.write("HTTP/1.1 200 OK\r\n\r\n")
+        } else if (path.startsWith("/echo/")) {
+            bodyText = path.split("/echo/")[1]
+            socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${bodyText.length}\r\n\r\n${bodyText}`)
         } else {
-            responseText = "404 Not Found"
-            bodyText = ""
+            socket.write("HTTP/1.1 404 Not Found\r\n\r\n")
         }
-        socket.write(`HTTP/1.1 ${responseText}\r\nContent-Type: text/plain\r\nContent-Length: ${bodyText.length}\r\n\r\n${bodyText}`)
     })
 
     socket.on("close", () => {
