@@ -1,9 +1,9 @@
-const net = require("net");
+const net = require("net")
 const fs = require("fs")
-const path = require("node:path");
-const { dirname } = require("path");
+const path = require("node:path")
+const zlib = require("zlib")
 
-console.log("Logs from your program will appear here!");
+console.log("Logs from your program will appear here!")
 
 const server = net.createServer((socket) => {
 
@@ -27,10 +27,11 @@ const server = net.createServer((socket) => {
         } else if (url.startsWith("/echo/")) {
             if (headers.hasOwnProperty('Accept-Encoding')) {
                 if (headers['Accept-Encoding'].split(",").map((val) => val.trim()).includes("gzip")) {
-                    socket.write("HTTP/1.1 200 OK\r\ncontent-Type: text/plain\r\nContent-Encoding: gzip\r\n\r\n")
+                    const bodyEncoded = zlib.gzipSync(bodyContent)
+                    socket.write(`HTTP/1.1 200 OK\r\ncontent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ${bodyEncoded.length}\r\n\r\n${bodyEncoded}`)
                     socket.end()
                 } else {
-                    socket.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n")
+                    socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${bodyContent.length}\r\n\r\n${bodyContent}`)
                     socket.end()
                 }
             } else {
