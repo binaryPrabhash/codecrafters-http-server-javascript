@@ -28,7 +28,8 @@ const server = net.createServer((socket) => {
             if (headers.hasOwnProperty('Accept-Encoding')) {
                 if (headers['Accept-Encoding'].split(",").map((val) => val.trim()).includes("gzip")) {
                     const bodyEncoded = zlib.gzipSync(bodyContent)
-                    socket.write(`HTTP/1.1 200 OK\r\ncontent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ${bodyEncoded.length}\r\n\r\n${bodyEncoded}`)
+                    socket.write(`HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\ncontent-Type: text/plain\r\nContent-Length: ${bodyEncoded.length}\r\n\r\n`)
+                    socket.write(bodyEncoded)
                     socket.end()
                 } else {
                     socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${bodyContent.length}\r\n\r\n${bodyContent}`)
