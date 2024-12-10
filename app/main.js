@@ -8,19 +8,38 @@ console.log("Logs from your program will appear here!");
 const server = net.createServer((socket) => {
 
     socket.on("data", (data) => {
-        console.log(data.toString())
-        const method = data.toString().split(" ")[0]
-        const url = data.toString().split(" ")[1]
-        const headers = data.toString().split("\r\n")
+        const [statusLine, ...rest] = data.toString().split("\r\n")
+        const headersList = rest.slice(0, -1)
+        const bodyContent = rest[rest.length - 1]
+
+        const headers = headersList.reduce((acc, header) => {
+            if (header.trim() === "") return acc
+            const [key, ...valueParts] = header.split(":")
+            const value = valueParts.join(":").trim()
+            acc[key.trim()] = value
+            return acc
+        }, {})
+
+        const [method, url, httpVersion] = statusLine.split(" ")
         if (url === "/") {
             socket.write("HTTP/1.1 200 OK\r\n\r\n")
             socket.end()
         } else if (url.startsWith("/echo/")) {
-            const bodyText = url.split("/echo/")[1]
-            socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${bodyText.length}\r\n\r\n${bodyText}`)
-            socket.end()
+            if (headers.hasOwnProperty('Accept-Encoding')) {
+                if (headers['Accept-Encoding'] === "gzip") {
+                    socket.write("HTTP/1.1 200 OK\r\ncontent-Type: text/plain\r\nContent-Encoding: gzip\r\n\r\n")
+                    socket.end()
+                } else {
+                    socket.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n")
+                    socket.end()
+                }
+            } else {
+                const bodyText = url.split("/echo/")[1]
+                socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${bodyText.length}\r\n\r\n${bodyText}`)
+                socket.end()
+            }
         } else if (url === "/user-agent") {
-            const userAgent = headers[2].split("User-Agent: ")[1]
+            const userAgent = headers['User-Agent']
             socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`)
             socket.end()
         } else if (url.startsWith("/files/")) {
@@ -37,8 +56,6 @@ const server = net.createServer((socket) => {
                     socket.end()
                 }
             } else if (method === "POST") {
-                let bodyContent = data.toString().split("\r\n")
-                bodyContent = bodyContent[bodyContent.length - 1]
                 fs.writeFile(path.join(directory, filename), bodyContent, (err) => {
                     if (err) throw err
                     console.log("File created successfully")
