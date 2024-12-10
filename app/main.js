@@ -25,19 +25,19 @@ const server = net.createServer((socket) => {
             socket.write("HTTP/1.1 200 OK\r\n\r\n")
             socket.end()
         } else if (url.startsWith("/echo/")) {
+            const urlTextContent = url.split("/echo/")[1]
             if (headers.hasOwnProperty('Accept-Encoding')) {
                 if (headers['Accept-Encoding'].split(",").map((val) => val.trim()).includes("gzip")) {
-                    const bodyEncoded = zlib.gzipSync(bodyContent)
-                    socket.write(`HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\ncontent-Type: text/plain\r\nContent-Length: ${bodyEncoded.length}\r\n\r\n`)
-                    socket.write(bodyEncoded)
+                    const urlTextEncoded = zlib.gzipSync(urlTextContent)
+                    socket.write(`HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\ncontent-Type: text/plain\r\nContent-Length: ${urlTextEncoded.length}\r\n\r\n`)
+                    socket.write(urlTextEncoded)
                     socket.end()
                 } else {
-                    socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${bodyContent.length}\r\n\r\n${bodyContent}`)
+                    socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${urlTextContent.length}\r\n\r\n${urlTextContent}`)
                     socket.end()
                 }
             } else {
-                const bodyText = url.split("/echo/")[1]
-                socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${bodyText.length}\r\n\r\n${bodyText}`)
+                socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${urlTextContent.length}\r\n\r\n${urlTextContent}`)
                 socket.end()
             }
         } else if (url === "/user-agent") {
